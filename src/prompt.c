@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "prompt.h"
+#include "mpc.h"
 // For Windows platform
 #ifdef _WIN32
 #include <string.h>
