@@ -1,29 +1,7 @@
 #include "prompt.h"
 #include "mpc.h"
 #include "eval.h"
-
-// For Windows platform
-#ifdef _WIN32
-#include <string.h>
-// Buffer for User input.
-static char input[USER_INPUT_BUFFER];
-
-char *readline(char* prompt){
-  fputs (prompt, stdout);
-  fgets (buffer, USER_INPUT_BUFFER, stdin);
-  char *cpy = malloc (stdlen(buffer) + 1);
-  strcpy (cpy, buffer);
-  cpy (strlen(cpy) - 1) = '\0';
-  return cpy;
-}
-void add_history (char *unused){}
-
-// For Linux/Mac platform
-#else
-#include <editline/readline.h>
-#include <editline/history.h>
-#endif
-
+#include "platform.h"
 
 int main(int argc, char** argv){
 	// Print Basic information about the Lisp REPL
@@ -36,7 +14,8 @@ int main(int argc, char** argv){
   mpc_parser_t *Expr = mpc_new ("expr");
   mpc_parser_t *Lispy = mpc_new ("lispy");
 
-  mpca_lang (MPCA_LANG_DEFAULT, "                                       \
+  mpca_lang (MPCA_LANG_DEFAULT, 
+  "                                                       \
     number      :/-?[0-9]+/ ;                             \
     operator    :'+' | '-' | '*' | '/' ;                  \
     expr        :<number> | '(' <operator> <expr>+ ')' ;  \
