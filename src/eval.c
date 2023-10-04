@@ -2,20 +2,58 @@
 #include "mpc.h"
 
 /* Create a new number type lval */
-lval lval_num(long x) {
-  lval v;
-  v.type = LVAL_NUM;
-  v.num = x;
+lval* lval_num(long x) {
+  lval* v = malloc(sizeof(lval));
+  v->type = LVAL_NUM;
+  v->num = x;
   return v;
 }
 
 /* Create a new error type lval */
-lval lval_err(int x) {
-  lval v;
-  v.type = LVAL_ERR;
-  v.err = x;
+lval* lval_err(char* m) {
+  lval* v = malloc(sizeof(lval));
+  v->type = LVAL_ERR;
+  v->err = malloc(strlen(m) + 1);
+  strcpy (v->err, m);
   return v;
 }
+
+lval* lval_sym(char* s){
+  lval *v = malloc (sizeof (lval));
+  v->type = LVAL_SYM;
+  v->sym = malloc (strlen(s) + 1);
+  strcpy (v->sym, s);
+  return v;
+}
+
+lval* lval_sexpr(void){
+  lval *v = malloc (sizeof(lval));
+  v->type = LVAL_SEXPR;
+  v->count = 0;
+  v->cell = NULL;
+  return v;
+}
+
+void lval_del(lval* v){
+	switch(v->type){
+		case LVAL_NUM:
+      break;
+		case LVAL_ERR:
+      free (v->err);
+      break;
+		case LVAL_SYM:
+      free (v->sym);
+      break;
+		case LVAL_SEXPR:
+			for (int i = 0; i < v->count; i++){
+					lval_del (v->cell[i]);
+				}
+			free (v->cell);
+			break;
+		}
+  free (v);
+}
+
 
 
 /* Print an "lval" */
@@ -46,7 +84,7 @@ void lval_println(lval v) { lval_print(v); putchar('\n'); }
 
 
 /* Now change to lval, because we will treat the err as val to. */
-lval eval_op(lval x, char* op, lval y) {
+lval* eval_op(lval x, char* op, lval y) {
 
   /* If either value is an error return it */
   if (x.type == LVAL_ERR) { return x; }
@@ -66,7 +104,7 @@ lval eval_op(lval x, char* op, lval y) {
   return lval_err(LERR_BAD_OP);
 }
 
-lval eval (mpc_ast_t *t)
+lval* eval (mpc_ast_t *t)
 {
   // Check Current AST Node if it's a number.
   if (strstr (t->tag, "number"))
