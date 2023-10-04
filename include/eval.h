@@ -11,10 +11,10 @@ enum
 
 enum
 {
-    LVAL_ERR,
+  LVAL_ERR,
 	LVAL_NUM,
 	LVAL_SYM,
-    LVAL_SEXPR
+  LVAL_SEXPR
 };
 
 typedef struct lval {
@@ -32,9 +32,15 @@ lval* lval_num (long);
 lval* lval_err (char*);
 lval *lval_sym (char*);
 lval *lval_sexpr (void);
-void lval_print (lval);
-void lval_println (lval);
-lval* eval_op (lval, char*, lval);
-lval* eval (mpc_ast_t*);
-void lval_del (lval*);
+
+void lval_expr_print (lval *, char, char);
+void lval_print (lval *);
+void lval_println (lval*);
+void lval_del (lval *);
+lval *lval_add (lval*, lval *);
+lval *lval_read_num (mpc_ast_t *);
+lval *lval_read (mpc_ast_t *);
+
+lval *lval_eval (lval *);
+void lval_del (lval *);
 #endif

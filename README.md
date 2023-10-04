@@ -1,6 +1,6 @@
 # leviathan-lisp
 
-按照build-your-own-lisp实现的lisp interpreter.
+按照build-your-own-lisp实现的lisp interpreter, 并且加上工程化与部分的功能扩展。
 
 文章链接：https://www.buildyourownlisp.com/
 
