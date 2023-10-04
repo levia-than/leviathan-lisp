@@ -1,6 +1,7 @@
 CC = gcc
 BIN_DIST = bin
 MPC_DIST = ./mpc
+INCLUDE_DIST = ./include
 STD = -std=c99
 MKDIR = mkdir -p
 CFLAGS = $(STD) -Wall -g
@@ -30,7 +31,7 @@ $(BIN_DIST)/.dirstamp:
 	touch $@
 
 $(BIN_DIST)/prompt: $(MPC_LIB) $(SRC)
-	$(CC) $(CFLAGS) -I$(MPC_DIST) $^ $(LFLAGS) -o $@
+	$(CC) $(CFLAGS) -I$(MPC_DIST) -I$(INCLUDE_DIST) $^ $(LFLAGS) -o $@
 
 clean:
 	rm -rf -- $(BIN_DIST)
