@@ -21,4 +21,5 @@ git clone https://github.com/levia-than/leviathan-lisp.git
 cd leviathan-lisp
 git submodule init
 git submodule update
+make
 ```
