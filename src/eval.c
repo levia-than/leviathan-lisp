@@ -21,6 +21,7 @@ char* ltype_name(int t) {
     case LVAL_SYM: return "Symbol";
     case LVAL_SEXPR: return "S-Expression";
     case LVAL_QEXPR: return "Q-Expression";
+    case LVAL_STR: return "String";
     default: return "Unknown";
   }
 }
@@ -108,6 +109,14 @@ lval* lval_lambda(lval* formals, lval* body) {
   return v;
 }
 
+lval* lval_str(char* s) {
+  lval* v = malloc(sizeof(lval));
+  v->type = LVAL_STR;
+  v->str = malloc(strlen(s) + 1);
+  strcpy(v->str, s);
+  return v;
+}
+
 void lval_del(lval* v) {
 
   switch (v->type) {
@@ -136,6 +145,7 @@ void lval_del(lval* v) {
       /* Also free the memory allocated to contain the pointers */
       free(v->cell);
     break;
+    case LVAL_STR: free(v->str); break;
   }
 
   /* Free the memory allocated for the "lval" struct itself */
@@ -155,12 +165,28 @@ lval* lval_read_num(mpc_ast_t* t){
   return errno != ERANGE ? lval_num (x) : lval_err ("invalid number");
 }
 
+lval* lval_read_str(mpc_ast_t* t) {
+  /* Cut off the final quote character */
+  t->contents[strlen(t->contents)-1] = '\0';
+  /* Copy the string missing out the first quote character */
+  char* unescaped = malloc(strlen(t->contents+1)+1);
+  strcpy(unescaped, t->contents+1);
+  /* Pass through the unescape function */
+  unescaped = mpcf_unescape(unescaped);
+  /* Construct a new lval using the string */
+  lval* str = lval_str(unescaped);
+  /* Free the string and return */
+  free(unescaped);
+  return str;
+}
+
 lval* lval_read(mpc_ast_t* t) {
 
-  /* If Symbol or Number return conversion to that type */
+  /* If Symbol or Number or String return conversion to that type */
   if (strstr(t->tag, "number")) { return lval_read_num(t); }
   if (strstr(t->tag, "symbol")) { return lval_sym(t->contents); }
-
+  if (strstr(t->tag, "string")) { return lval_read_str(t); }
+  
   /* If root (>) or sexpr then create empty list */
   lval* x = NULL;
   if (strcmp(t->tag, ">") == 0) { x = lval_sexpr(); } 
@@ -174,10 +200,23 @@ lval* lval_read(mpc_ast_t* t) {
     if (strcmp(t->children[i]->contents, "}") == 0) { continue; }
     if (strcmp(t->children[i]->contents, "{") == 0) { continue; }
     if (strcmp(t->children[i]->tag,  "regex") == 0) { continue; }
+    if (strstr(t->children[i]->tag, "comment")) { continue; }
     x = lval_add(x, lval_read(t->children[i]));
   }
 
   return x;
+}
+
+void lval_print_str(lval* v) {
+  /* Make a Copy of the string */
+  char* escaped = malloc(strlen(v->str)+1);
+  strcpy(escaped, v->str);
+  /* Pass it through the escape function */
+  escaped = mpcf_escape(escaped);
+  /* Print it between " characters */
+  printf("\"%s\"", escaped);
+  /* free the copied string */
+  free(escaped);
 }
 
 void lval_expr_print(lval* v, char open, char close) {
@@ -210,6 +249,7 @@ void lval_print(lval* v) {
         putchar(' '); lval_print(v->body); putchar(')');
       }
     break;
+    case LVAL_STR:   lval_print_str(v); break;
   }
 }
 
@@ -313,6 +353,8 @@ lval* lval_copy(lval* v) {
         x->cell[i] = lval_copy(v->cell[i]);
       }
     break;
+    case LVAL_STR: x->str = malloc(strlen(v->str) + 1);
+      strcpy(x->str, v->str); break;
   }
 
   return x;

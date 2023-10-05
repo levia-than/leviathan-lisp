@@ -14,6 +14,7 @@ enum
   LVAL_ERR,
 	LVAL_NUM,
 	LVAL_SYM,
+  LVAL_STR,
   LVAL_FUN,
   LVAL_SEXPR,
   LVAL_QEXPR
@@ -34,8 +35,9 @@ typedef struct lval {
 
   /* Error and Symbol types have some string data */
   long num;
-  char* err;
-  char* sym;
+  char *err;
+  char *sym;
+  char *str;
 
   /* As soon as we add general symbol in the lang,
      we need add a function pointer for buildin func.*/
@@ -78,6 +80,7 @@ lval *lval_pop (lval *, int);
 lval *lval_take (lval *, int);
 lval *lval_copy (lval *);
 lval *lval_call (lenv *, lval *, lval *);
+lval *lval_str (char *);
 
 lval *lval_read_num (mpc_ast_t *);
 lval *lval_read (mpc_ast_t *);
