@@ -1,22 +1,6 @@
 #include "buildin_op.h"
-#define LASSERT(args, cond, fmt, ...) \
-  if (!(cond)) { \
-    lval* err = lval_err(fmt, ##__VA_ARGS__); \
-    lval_del(args); \
-    return err; \
-  }
-
-#define LASSERT_TYPE(name, args, pos, in_type)                                   \
-  LASSERT (args, (args->cell[pos]->type == in_type),\
-  "Function '%s' passed incorrect type for argument %d. ",\
-  "Got %s, Expected %s.", name, pos, \
-  ltype_name(args->cell[pos]->type), ltype_name(in_type))
-
-#define LASSERT_NUM(name, args, num) \
-  LASSERT(args, (args->count == num),\
-  "Function 'head' passed too many arguments. ",\
-  "Got %i, Expected %i.", args->count, num)
-
+#include "parser.h"
+#include "assert_macro.h"
 
 lval* builtin_op(lenv*e, lval* a, char* op) {
 
@@ -347,6 +331,31 @@ lval* builtin_lambda(lenv* e, lval* a) {
   return lval_lambda(formals, body);
 }
 
+lval* builtin_print(lenv* e, lval* a) {
+
+  /* Print each argument followed by a space */
+  for (int i = 0; i < a->count; i++) {
+    lval_print(a->cell[i]); putchar(' ');
+  }
+
+  /* Print a newline and delete arguments */
+  putchar('\n');
+  lval_del(a);
+
+  return lval_sexpr();
+}
+
+lval* builtin_error(lenv* e, lval* a) {
+  LASSERT_NUM("error", a, 1);
+  LASSERT_TYPE("error", a, 0, LVAL_STR);
+
+  /* Construct Error from first argument */
+  lval* err = lval_err(a->cell[0]->str);
+
+  /* Delete arguments and return */
+  lval_del(a);
+  return err;
+}
 
 // Build in function in this language.
 void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
@@ -381,6 +390,11 @@ void lenv_add_builtins(lenv* e) {
   lenv_add_builtin(e, "<",  builtin_lt);
   lenv_add_builtin(e, ">=", builtin_ge);
   lenv_add_builtin(e, "<=", builtin_le);
+
+  /* String Functions */
+  lenv_add_builtin(e, "load",  builtin_load);
+  lenv_add_builtin(e, "error", builtin_error);
+  lenv_add_builtin(e, "print", builtin_print);
 }
 
 
@@ -394,4 +408,46 @@ lval* builtin(lenv*e, lval* a, char* func) {
   if (strstr("+-/*", func)) { return builtin_op(e, a, func); }
   lval_del(a);
   return lval_err("Unknown Function!");
+}
+
+lval* builtin_load(lenv* e, lval* a) {
+  LASSERT_NUM("load", a, 1);
+  LASSERT_TYPE("load", a, 0, LVAL_STR);
+
+  /* Parse File given by string name */
+  mpc_result_t r;
+  if (mpc_parse_contents(a->cell[0]->str, Lispy, &r)) {
+
+    /* Read contents */
+    lval* expr = lval_read(r.output);
+    mpc_ast_delete(r.output);
+
+    /* Evaluate each Expression */
+    while (expr->count) {
+      lval* x = lval_eval(e, lval_pop(expr, 0));
+      /* If Evaluation leads to error print it */
+      if (x->type == LVAL_ERR) { lval_println(x); }
+      lval_del(x);
+    }
+
+    /* Delete expressions and arguments */
+    lval_del(expr);
+    lval_del(a);
+
+    /* Return empty list */
+    return lval_sexpr();
+
+  } else {
+    /* Get Parse Error as String */
+    char* err_msg = mpc_err_string(r.error);
+    mpc_err_delete(r.error);
+
+    /* Create new error message using it */
+    lval* err = lval_err("Could not load Library %s", err_msg);
+    free(err_msg);
+    lval_del(a);
+
+    /* Cleanup and return error */
+    return err;
+  }
 }

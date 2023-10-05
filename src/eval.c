@@ -10,7 +10,6 @@ interesting lib.
 
 */
 #include "eval.h"
-#include "mpc.h"
 #include "buildin_op.h"
 
 char* ltype_name(int t) {
