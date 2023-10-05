@@ -3,6 +3,6 @@
 
 #include "base_lib.h"
 #include "eval.h"
-lval *builtin_op (lval *, char *);
+lval *builtin (lval *, char *);
 
 #endif
