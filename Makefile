@@ -20,6 +20,7 @@ ifeq ($(findstring MINGW,$(PLATFORM)),MINGW)
 endif
 
 SRC = $(wildcard src/*.c)
+INCLUDE = $(wildcard include/*.h)
 MPC_LIB = mpc/mpc.c
 EXECUTABLE = $(BIN_DIST)/prompt
 
@@ -30,7 +31,7 @@ $(BIN_DIST)/.dirstamp:
 	$(MKDIR) $(BIN_DIST)
 	touch $@
 
-$(BIN_DIST)/prompt: $(MPC_LIB) $(SRC)
+$(BIN_DIST)/prompt: $(MPC_LIB) $(SRC) $(INCLUDE)
 	$(CC) $(CFLAGS) -I$(MPC_DIST) -I$(INCLUDE_DIST) $^ $(LFLAGS) -o $@
 
 clean:

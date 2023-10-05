@@ -3,6 +3,6 @@
 
 #include "base_lib.h"
 #include "eval.h"
-lval *builtin (lval *, char *);
-
+lval *builtin (lenv *, lval *, char *);
+void lenv_add_builtins (lenv *);
 #endif

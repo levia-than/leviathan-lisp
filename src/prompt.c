@@ -2,6 +2,7 @@
 #include "mpc.h"
 #include "eval.h"
 #include "platform.h"
+#include "buildin_op.h"
 
 int main(int argc, char** argv){
 	// Print Basic information about the Lisp REPL
@@ -19,8 +20,7 @@ int main(int argc, char** argv){
 mpca_lang(MPCA_LANG_DEFAULT,
   "                                                        \
     number : /-?[0-9]+/ ;                                  \
-    symbol : \"list\" | \"head\" | \"tail\"                \
-           | \"join\" | \"eval\" | '+' | '-' | '*' | '/' ; \
+    symbol : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&]+/ ;            \
     sexpr  : '(' <expr>* ')' ;                             \
     qexpr  : '{' <expr>* '}' ;                             \
     expr   : <number> | <symbol> | <sexpr> | <qexpr> ;     \
@@ -28,17 +28,20 @@ mpca_lang(MPCA_LANG_DEFAULT,
   ",
   Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
 
+  lenv* e = lenv_new();
+  lenv_add_builtins(e);
+
   // Main loop
   while(1){
 		// Output the prompt
-      char* input = readline("lisp #");
+      char *input = readline ("lisp # ");
       add_history (input);
 		// Try to parse the user Input.
       mpc_result_t r;
       if(mpc_parse("<stdin>", input, Lispy, &r)){
           // mpc_ast_print (r.output);
 
-          lval* x = lval_eval(lval_read(r.output));
+          lval* x = lval_eval(e, lval_read(r.output));
           lval_println(x);
           lval_del(x);
           mpc_ast_delete (r.output);
@@ -51,7 +54,7 @@ mpca_lang(MPCA_LANG_DEFAULT,
     // Free the input Buffer
       free (input);
     }
-
-  mpc_cleanup(6, Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
+  lenv_del (e);
+  mpc_cleanup (6, Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
   return 0;
 }
