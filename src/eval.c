@@ -1,3 +1,16 @@
+/*
+==============Quick explanation of the mpc lib===============
+In this project, the author chooses his own parser, which name is "mpc",
+to parse the "lispy" lang.
+
+Here I use git's submodule function to make the whole project more 
+professional, so you can jump to the mpc's github website
+(https://github.com/orangeduck/mpc) to learn it 
+your self, and of course you can read the illustration below written
+by me.
+
+
+*/
 #include "eval.h"
 #include "mpc.h"
 
@@ -18,6 +31,7 @@ lval* lval_err(char* m) {
   return v;
 }
 
+/* Create a new symbol type of lval */
 lval* lval_sym(char* s) {
   lval* v = malloc(sizeof(lval));
   v->type = LVAL_SYM;
@@ -26,9 +40,19 @@ lval* lval_sym(char* s) {
   return v;
 }
 
+/* Create a new S-expression type of lval */
 lval* lval_sexpr(void) {
   lval* v = malloc(sizeof(lval));
   v->type = LVAL_SEXPR;
+  v->count = 0;
+  v->cell = NULL;
+  return v;
+}
+
+/* Create A pointer to a new empty Qexpr lval */
+lval* lval_qexpr(void) {
+  lval* v = malloc(sizeof(lval));
+  v->type = LVAL_QEXPR;
   v->count = 0;
   v->cell = NULL;
   return v;
@@ -44,7 +68,8 @@ void lval_del(lval* v) {
     case LVAL_ERR: free(v->err); break;
     case LVAL_SYM: free(v->sym); break;
 
-    /* If Sexpr then delete all elements inside */
+    /* If Sexpr Or Qexpr then delete all elements inside */
+    case LVAL_QEXPR:
     case LVAL_SEXPR:
       for (int i = 0; i < v->count; i++) {
         lval_del(v->cell[i]);
@@ -81,11 +106,14 @@ lval* lval_read(mpc_ast_t* t) {
   lval* x = NULL;
   if (strcmp(t->tag, ">") == 0) { x = lval_sexpr(); } 
   if (strstr(t->tag, "sexpr"))  { x = lval_sexpr(); }
+  if (strstr(t->tag, "qexpr"))  { x = lval_qexpr(); }
 
   /* Fill this list with any valid expression contained within */
   for (int i = 0; i < t->children_num; i++) {
     if (strcmp(t->children[i]->contents, "(") == 0) { continue; }
     if (strcmp(t->children[i]->contents, ")") == 0) { continue; }
+    if (strcmp(t->children[i]->contents, "}") == 0) { continue; }
+    if (strcmp(t->children[i]->contents, "{") == 0) { continue; }
     if (strcmp(t->children[i]->tag,  "regex") == 0) { continue; }
     x = lval_add(x, lval_read(t->children[i]));
   }
@@ -114,6 +142,7 @@ void lval_print(lval* v) {
     case LVAL_ERR:   printf("Error: %s", v->err); break;
     case LVAL_SYM:   printf("%s", v->sym); break;
     case LVAL_SEXPR: lval_expr_print(v, '(', ')'); break;
+    case LVAL_QEXPR: lval_expr_print(v, '{', '}'); break;
   }
 }
 
