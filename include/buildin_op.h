@@ -4,5 +4,6 @@
 #include "base_lib.h"
 #include "eval.h"
 lval *builtin (lenv *, lval *, char *);
+lval *builtin_eval (lenv *, lval *);
 void lenv_add_builtins (lenv *);
 #endif
