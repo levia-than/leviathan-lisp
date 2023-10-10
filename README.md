@@ -4,6 +4,7 @@
 
 文章链接：https://www.buildyourownlisp.com/
 
+
 ## Prerequisite
 ```bash
 # Install editline lib(No need for Windows)
@@ -22,4 +23,10 @@ cd leviathan-lisp
 git submodule init
 git submodule update
 make
+```
+
+## User guide
+```bash
+# Just run the program below:
+./bin/prompt
 ```
